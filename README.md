@@ -148,8 +148,8 @@ Stack de pruebas: **xUnit**, **FluentAssertions**, **NSubstitute**.
 | 4 | ✅ Completada | Aplicación (CQRS, DTOs, handlers) |
 | 5 | ✅ Completada | Infraestructura (EF Core, repos, migraciones) |
 | 6 | ✅ Completada | API (controllers, endpoints) |
-| 7 | ⏳ Pendiente | Tests unitarios |
-| 8 | ⏳ Pendiente | Revisión final |
+| 7 | ✅ Completada | Tests unitarios |
+| 8 | ✅ Completada | Revisión final |
 
 ## Principios aplicados
 
