@@ -1,0 +1,21 @@
+## bin/
+## obj/
+**/bin/
+**/obj/
+
+## IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+## Aspire
+.aspire/
+
+## OS
+Thumbs.db
+.DS_Store
+
+## Secrets
+appsettings.*.local.json
+secrets.json
