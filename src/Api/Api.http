@@ -1,8 +1,10 @@
 @baseUrl = http://localhost:5230
 @contentType = application/json
 
-@baseUrl = http://localhost:5230
-@contentType = application/json
+# Variables iniciales para evitar errores del cliente REST al ejecutar el archivo en orden.
+@platoId = 00000000-0000-0000-0000-000000000001
+@clienteId = 00000000-0000-0000-0000-000000000002
+@pedidoId = 00000000-0000-0000-0000-000000000003
 
 # Al iniciar mediante AppHost, copie la URL real de "api" desde el Dashboard de Aspire.
 
