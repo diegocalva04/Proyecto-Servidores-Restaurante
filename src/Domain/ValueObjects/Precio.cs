@@ -15,7 +15,7 @@ public sealed class Precio : ValueObject
 
     public static Result<Precio> Crear(decimal valor)
     {
-        if (valor < 0)
+        if (valor <= 0)
         {
             return Result.Failure<Precio>(DomainErrors.Plato.PrecioInvalido);
         }

@@ -1,4 +1,5 @@
 using Api.DependencyInjection;
+using Api.Extensions;
 using Application.DependencyInjection;
 using Infrastructure.DependencyInjection;
 using Infrastructure.Persistence;
@@ -23,6 +24,8 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
+await app.ApplyMigrationsAsync();
+app.UseExceptionHandler();
 app.MapDefaultEndpoints();
 
 if (app.Environment.IsDevelopment())

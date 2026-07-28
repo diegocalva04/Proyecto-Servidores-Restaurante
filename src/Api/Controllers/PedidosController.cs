@@ -25,7 +25,8 @@ public sealed class PedidosController : ControllerBase
     {
         var command = new RegistrarPedidoCommand(request.ClienteId, request.Lineas);
         var result = await handler.HandleAsync(command, cancellationToken);
-        return result.ToOkResult();
+        return result.ToCreatedResult(
+            pedido => Url.Action(nameof(ObtenerPorId), new { id = pedido.Id })!);
     }
 
     [HttpGet]
@@ -46,7 +47,7 @@ public sealed class PedidosController : ControllerBase
     )
     {
         var pedido = await handler.HandleAsync(new ObtenerPedidoPorIdQuery(id), cancellationToken);
-        return pedido is null ? NotFound() : Ok(pedido);
+        return pedido is null ? ResultExtensions.ToNotFoundResult("Pedido", id) : Ok(pedido);
     }
 
     [HttpPut("{id:guid}")]

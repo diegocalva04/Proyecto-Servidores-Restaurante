@@ -1,5 +1,8 @@
+using Domain.Common;
+using Domain.Events;
 using Domain.Repositories;
 using Domain.Services;
+using Infrastructure.DomainEvents;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Repositories;
 using Infrastructure.Services;
@@ -20,6 +23,9 @@ public static class DependencyInjection
         services.AddScoped<IClienteRepository, ClienteRepository>();
         services.AddScoped<IPedidoRepository, PedidoRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+        services.AddScoped<IDomainEventHandler<ClienteRegistrado>, ClienteRegistradoHandler>();
+        services.AddScoped<IDomainEventHandler<PedidoRegistrado>, PedidoRegistradoHandler>();
         services.AddSingleton<IClock, SystemClock>();
 
         return services;

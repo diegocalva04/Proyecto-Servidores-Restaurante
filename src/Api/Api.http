@@ -1,6 +1,215 @@
-@Api_HostAddress = http://localhost:5230
+@baseUrl = http://localhost:5230
+@contentType = application/json
 
-GET {{Api_HostAddress}}/weatherforecast/
-Accept: application/json
+# Al iniciar mediante AppHost, copie la URL real de "api" desde el Dashboard de Aspire.
+
+### Health
+GET {{baseUrl}}/health
+
+### Listados iniciales
+GET {{baseUrl}}/api/platos
+###
+GET {{baseUrl}}/api/clientes
+###
+GET {{baseUrl}}/api/pedidos
+
+### Crear plato
+# @name crearPlato
+POST {{baseUrl}}/api/platos
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Encocado de pescado",
+  "descripcion": "Pescado en salsa de coco",
+  "precio": 12.50,
+  "categoria": 2,
+  "disponible": true
+}
+
+> {%
+  client.global.set("platoId", response.body.id);
+%}
+
+### Consultar y actualizar plato
+GET {{baseUrl}}/api/platos/{{platoId}}
+###
+PUT {{baseUrl}}/api/platos/{{platoId}}
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Encocado especial",
+  "descripcion": "Pescado en salsa de coco",
+  "precio": 14.00,
+  "categoria": 2,
+  "disponible": false
+}
+
+### Platos disponibles
+GET {{baseUrl}}/api/platos/disponibles
+
+### Marcar plato disponible otra vez
+PUT {{baseUrl}}/api/platos/{{platoId}}
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Encocado especial",
+  "descripcion": "Pescado en salsa de coco",
+  "precio": 14.00,
+  "categoria": 2,
+  "disponible": true
+}
+
+### Crear cliente
+# @name crearCliente
+POST {{baseUrl}}/api/clientes
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Ana",
+  "apellido": "Pérez",
+  "correo": "ana{{$timestamp}}@example.com",
+  "telefono": "0999123456"
+}
+
+> {%
+  client.global.set("clienteId", response.body.id);
+%}
+
+### Consultar y actualizar cliente
+GET {{baseUrl}}/api/clientes/{{clienteId}}
+###
+PUT {{baseUrl}}/api/clientes/{{clienteId}}
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Ana María",
+  "apellido": "Pérez",
+  "correo": "ana.actualizada{{$timestamp}}@example.com",
+  "telefono": "0999555444"
+}
+
+### Crear pedido
+# @name crearPedido
+POST {{baseUrl}}/api/pedidos
+Content-Type: {{contentType}}
+
+{
+  "clienteId": "{{clienteId}}",
+  "lineas": [
+    { "platoId": "{{platoId}}", "cantidad": 2 }
+  ]
+}
+
+> {%
+  client.global.set("pedidoId", response.body.id);
+%}
+
+### Consultar pedido
+GET {{baseUrl}}/api/pedidos/{{pedidoId}}
+
+### Actualizar líneas
+PUT {{baseUrl}}/api/pedidos/{{pedidoId}}
+Content-Type: {{contentType}}
+
+{
+  "estado": null,
+  "lineas": [
+    { "platoId": "{{platoId}}", "cantidad": 3 }
+  ]
+}
+
+### Cambiar a EnPreparacion y luego Entregado
+PUT {{baseUrl}}/api/pedidos/{{pedidoId}}
+Content-Type: {{contentType}}
+
+{ "estado": 2, "lineas": null }
 
 ###
+PUT {{baseUrl}}/api/pedidos/{{pedidoId}}
+Content-Type: {{contentType}}
+
+{ "estado": 3, "lineas": null }
+
+### Intento inválido: modificar pedido final
+PUT {{baseUrl}}/api/pedidos/{{pedidoId}}
+Content-Type: {{contentType}}
+
+{ "estado": null, "lineas": [{ "platoId": "{{platoId}}", "cantidad": 1 }] }
+
+### Casos inválidos: precios
+POST {{baseUrl}}/api/platos
+Content-Type: {{contentType}}
+
+{ "nombre": "Inválido", "descripcion": "", "precio": 0, "categoria": 1, "disponible": true }
+###
+POST {{baseUrl}}/api/platos
+Content-Type: {{contentType}}
+
+{ "nombre": "Inválido", "descripcion": "", "precio": -1, "categoria": 1, "disponible": true }
+
+### Casos inválidos: cliente
+POST {{baseUrl}}/api/clientes
+Content-Type: {{contentType}}
+
+{ "nombre": "Ana", "apellido": "Pérez", "correo": "correo", "telefono": "0999123456" }
+###
+POST {{baseUrl}}/api/clientes
+Content-Type: {{contentType}}
+
+{ "nombre": "Ana", "apellido": "Pérez", "correo": "ana@example.com", "telefono": "12" }
+
+### Casos inválidos: pedidos
+POST {{baseUrl}}/api/pedidos
+Content-Type: {{contentType}}
+
+{ "clienteId": "{{clienteId}}", "lineas": [] }
+###
+POST {{baseUrl}}/api/pedidos
+Content-Type: {{contentType}}
+
+{ "clienteId": "{{clienteId}}", "lineas": [{ "platoId": "{{platoId}}", "cantidad": 0 }] }
+###
+POST {{baseUrl}}/api/pedidos
+Content-Type: {{contentType}}
+
+{ "clienteId": "{{clienteId}}", "lineas": [{ "platoId": "{{platoId}}", "cantidad": -1 }] }
+###
+POST {{baseUrl}}/api/pedidos
+Content-Type: {{contentType}}
+
+{ "clienteId": "00000000-0000-0000-0000-000000000001", "lineas": [{ "platoId": "{{platoId}}", "cantidad": 1 }] }
+###
+POST {{baseUrl}}/api/pedidos
+Content-Type: {{contentType}}
+
+{ "clienteId": "{{clienteId}}", "lineas": [{ "platoId": "00000000-0000-0000-0000-000000000001", "cantidad": 1 }] }
+
+### Pedido con plato no disponible
+PUT {{baseUrl}}/api/platos/{{platoId}}
+Content-Type: {{contentType}}
+
+{ "nombre": "Encocado especial", "descripcion": "Pescado en salsa de coco", "precio": 14.00, "categoria": 2, "disponible": false }
+###
+POST {{baseUrl}}/api/pedidos
+Content-Type: {{contentType}}
+
+{ "clienteId": "{{clienteId}}", "lineas": [{ "platoId": "{{platoId}}", "cantidad": 1 }] }
+###
+PUT {{baseUrl}}/api/platos/{{platoId}}
+Content-Type: {{contentType}}
+
+{ "nombre": "Encocado especial", "descripcion": "Pescado en salsa de coco", "precio": 14.00, "categoria": 2, "disponible": true }
+
+### Consultar GUID inexistente
+GET {{baseUrl}}/api/platos/00000000-0000-0000-0000-000000000001
+###
+GET {{baseUrl}}/api/clientes/00000000-0000-0000-0000-000000000001
+###
+GET {{baseUrl}}/api/pedidos/00000000-0000-0000-0000-000000000001
+
+### Limpieza (en este orden)
+DELETE {{baseUrl}}/api/pedidos/{{pedidoId}}
+###
+DELETE {{baseUrl}}/api/clientes/{{clienteId}}
+###
+DELETE {{baseUrl}}/api/platos/{{platoId}}

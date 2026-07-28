@@ -46,7 +46,7 @@ public sealed class PlatosController : ControllerBase
     )
     {
         var plato = await handler.HandleAsync(new ObtenerPlatoPorIdQuery(id), cancellationToken);
-        return plato is null ? NotFound() : Ok(plato);
+        return plato is null ? ResultExtensions.ToNotFoundResult("Plato", id) : Ok(plato);
     }
 
     [HttpPost]

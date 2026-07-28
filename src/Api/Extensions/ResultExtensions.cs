@@ -6,6 +6,17 @@ namespace Api.Extensions;
 /// Convierte resultados del dominio/aplicación en respuestas HTTP.
 public static class ResultExtensions
 {
+    public static IActionResult ToNotFoundResult(string resource, Guid id) =>
+        new NotFoundObjectResult(
+            new ProblemDetails
+            {
+                Title = "Recurso no encontrado",
+                Detail = $"{resource} con identificador '{id}' no fue encontrado.",
+                Status = StatusCodes.Status404NotFound,
+                Extensions = { ["code"] = $"{resource}.NoEncontrado" },
+            }
+        );
+
     public static IActionResult ToActionResult(this Result result)
     {
         if (result.IsSuccess)
@@ -52,6 +63,19 @@ public static class ResultExtensions
                     Title = "Recurso no encontrado",
                     Detail = error.Message,
                     Status = StatusCodes.Status404NotFound,
+                    Extensions = { ["code"] = error.Code },
+                }
+            );
+        }
+
+        if (error.Code is "Pedido.EstadoFinal" or "Pedido.YaEntregado" or "Pedido.EstadoInvalido")
+        {
+            return new ConflictObjectResult(
+                new ProblemDetails
+                {
+                    Title = "Conflicto de estado",
+                    Detail = error.Message,
+                    Status = StatusCodes.Status409Conflict,
                     Extensions = { ["code"] = error.Code },
                 }
             );

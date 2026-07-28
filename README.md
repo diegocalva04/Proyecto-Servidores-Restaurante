@@ -1,164 +1,61 @@
-# Sistema de Gestión de Restaurante — Backend
+# Restaurante
 
-Backend para un **Sistema de Gestión de Restaurante** construido con **.NET 10**, **Clean Architecture**, **DDD**, **CQRS ligero** (sin MediatR) y **.NET Aspire** para orquestación local.
+Backend REST para gestionar platos, clientes y pedidos. La solución conserva DDD, Arquitectura Limpia y CQRS propio: `Domain` contiene agregados y reglas; `Application`, commands, queries y handlers; `Infrastructure`, EF Core, PostgreSQL, repositorios, unidad de trabajo y despacho de eventos; `Api`, controladores y HTTP; `AppHost`, la orquestación Aspire.
 
-## Arquitectura
+## Tecnologías y requisitos
 
-```
-HTTP / API  →  Application  →  Domain  ←  Infrastructure  →  PostgreSQL
-                    ↑
-              AppHost (Aspire)
-```
+- .NET SDK 10
+- .NET Aspire 13.4.6 y Aspire CLI
+- Docker Desktop o un runtime OCI compatible, en ejecución
+- PostgreSQL se crea automáticamente como recurso de AppHost
 
-| Capa | Proyecto | Responsabilidad |
-|------|----------|-----------------|
-| **Dominio** | `src/Domain` | Entidades, value objects, reglas de negocio, eventos, `Result<T>`, interfaces de repositorio |
-| **Aplicación** | `src/Application` | Casos de uso (Commands/Queries/Handlers), DTOs, validación de entrada |
-| **Infraestructura** | `src/Infrastructure` | EF Core, PostgreSQL, repositorios, migraciones, `DbContext` |
-| **API** | `src/Api` | Controllers delgados, Swagger, configuración HTTP, DI |
-| **ServiceDefaults** | `src/ServiceDefaults` | Health checks, telemetría, resiliencia y service discovery (Aspire) |
-| **AppHost** | `src/AppHost` | Orquestación: PostgreSQL, pgAdmin y API |
-| **Tests** | `tests/Tests` | Pruebas unitarias de Dominio y Aplicación |
+## Restaurar, compilar y probar
 
-## Estructura de la solución
+Desde esta carpeta:
 
-```
-Restaurante/
-├── Restaurante.slnx
-├── README.md
-├── src/
-│   ├── Domain/
-│   │   ├── Common/
-│   │   ├── Entities/
-│   │   ├── ValueObjects/
-│   │   ├── Enums/
-│   │   ├── Events/
-│   │   ├── Repositories/
-│   │   ├── Services/
-│   │   └── Errors/
-│   ├── Application/
-│   │   ├── Common/
-│   │   ├── DependencyInjection/
-│   │   ├── Platos/
-│   │   ├── Clientes/
-│   │   └── Pedidos/
-│   ├── Infrastructure/
-│   │   ├── DependencyInjection/
-│   │   ├── Persistence/
-│   │   └── Services/
-│   ├── Api/
-│   │   ├── Controllers/
-│   │   ├── DependencyInjection/
-│   │   └── Extensions/
-│   ├── ServiceDefaults/
-│   └── AppHost/
-└── tests/
-    └── Tests/
-        ├── Domain/
-        └── Application/
+```powershell
+dotnet restore Restaurante.slnx
+dotnet build Restaurante.slnx --no-restore
+dotnet test Restaurante.slnx --no-build
+dotnet test tests/Tests/Tests.csproj
+dotnet test tests/FunctionalTests/FunctionalTests.csproj
 ```
 
-## Entidades del dominio
+Las pruebas funcionales usan `Aspire.Hosting.Testing`, levantan AppHost, PostgreSQL y la API, y hacen peticiones HTTP reales sin puertos fijos. Requieren Docker activo.
 
-| Entidad | Descripción |
-|---------|-------------|
-| **Plato** | Catálogo: nombre, descripción, precio, categoría, disponibilidad |
-| **Cliente** | Datos de contacto validados mediante value objects |
-| **Pedido** | Agregado raíz con reglas de negocio (estado, líneas, total) |
+## Iniciar el sistema
 
-## Casos de uso principales
-
-1. **Lectura** — `GET /api/platos/disponibles` → Obtener platos disponibles (DTOs)
-2. **Escritura** — `POST /api/clientes` → Registrar cliente vía fábrica de dominio
-3. **Decisión** — `POST /api/pedidos` → Registrar pedido con reglas de negocio y `Result<T>`
-
-Además se implementará **CRUD completo** para Platos, Clientes y Pedidos.
-
-## Reglas de negocio (Dominio)
-
-- No registrar un pedido sin platos
-- No pedir platos no disponibles
-- Total calculado automáticamente
-- No modificar un pedido en estado **Entregado**
-- El cliente debe existir antes de registrar un pedido
-
-## Dependencias entre proyectos
-
-```
-Domain          → (ninguna)
-Application     → Domain
-Infrastructure  → Domain
-Api             → Application, Infrastructure, ServiceDefaults
-AppHost         → Api
-Tests           → Domain, Application
+```powershell
+aspire start --apphost src/AppHost/AppHost.csproj --non-interactive
 ```
 
-## Requisitos
+Abra la URL del Dashboard indicada por Aspire. Allí aparecen `postgres`, `restaurantedb`, `pgadmin` y `api`. Espere a que `api` esté saludable y abra su endpoint; Swagger está en `/swagger` durante Development. La API aplica la migración de EF Core con `MigrateAsync` al iniciar.
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (para PostgreSQL y pgAdmin vía Aspire)
-- [Aspire CLI](https://aspire.dev/) (opcional, para `aspire run`)
+Para ejecutar solo la API, use `dotnet run --project src/Api/Api.csproj --launch-profile http`; escucha en `http://localhost:5230` y necesita PostgreSQL accesible mediante la cadena `restaurantedb`.
 
-## Ejecución
+## Api.http
 
-### Con Aspire (recomendado)
+Abra `src/Api/Api.http` en Visual Studio, Rider o VS Code con REST Client. Inicie la API, ajuste `baseUrl` si usa la URL dinámica mostrada por Aspire y ejecute las solicitudes en orden. El archivo captura `platoId`, `clienteId` y `pedidoId`, demuestra el flujo completo, errores y limpieza.
 
-```bash
-cd src/AppHost
-dotnet run
+## Reglas principales
+
+- El precio de un plato debe ser mayor que cero.
+- Nombre, correo y teléfono del cliente son value objects validados e inmutables.
+- Un pedido requiere cliente existente, al menos una línea, cantidades positivas y platos existentes/disponibles.
+- El total es la suma de subtotales capturados al crear o actualizar líneas.
+- Transiciones: `Pendiente → EnPreparacion/Cancelado`; `EnPreparacion → Entregado/Cancelado`.
+- `Entregado` y `Cancelado` son estados finales e impiden modificaciones.
+- `ClienteRegistrado` y `PedidoRegistrado` se despachan después de persistir; se limpian solo tras despacho satisfactorio.
+
+## Proyectos
+
+```text
+src/Domain
+src/Application
+src/Infrastructure
+src/Api
+src/AppHost
+src/ServiceDefaults
+tests/Tests
+tests/FunctionalTests
 ```
-
-Esto levanta:
-
-- **API** — servicio REST
-- **PostgreSQL** — base de datos
-- **pgAdmin** — administración de BD
-- **Dashboard Aspire** — telemetría y health checks
-
-### Solo API (desarrollo aislado)
-
-```bash
-cd src/Api
-dotnet run
-```
-
-> La conexión a PostgreSQL se configurará en la Etapa 5 (Infraestructura).
-
-## Swagger
-
-En entorno de desarrollo, la documentación OpenAPI está disponible en:
-
-- `/swagger`
-
-## Tests
-
-```bash
-dotnet test
-```
-
-Stack de pruebas: **xUnit**, **FluentAssertions**, **NSubstitute**.
-
-## Estado del proyecto
-
-| Etapa | Estado | Contenido |
-|-------|--------|-----------|
-| 1 | ✅ Completada | Diseño de arquitectura |
-| 2 | ✅ Completada | Solución, proyectos, referencias, Aspire base |
-| 3 | ✅ Completada | Dominio (entidades, VOs, reglas, eventos) |
-| 4 | ✅ Completada | Aplicación (CQRS, DTOs, handlers) |
-| 5 | ✅ Completada | Infraestructura (EF Core, repos, migraciones) |
-| 6 | ✅ Completada | API (controllers, endpoints) |
-| 7 | ✅ Completada | Tests unitarios |
-| 8 | ✅ Completada | Revisión final |
-
-## Principios aplicados
-
-- **SOLID** — responsabilidades separadas por capa
-- **DDD** — agregados, value objects y eventos de dominio
-- **Clean Architecture** — dependencias hacia el dominio
-- **CQRS ligero** — commands y queries sin MediatR
-- **Repository Pattern** — interfaces en Dominio, implementación en Infraestructura
-
-## Licencia
-
-Proyecto educativo / de referencia.

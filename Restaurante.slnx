@@ -8,6 +8,7 @@
     <Project Path="src/ServiceDefaults/ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/FunctionalTests/FunctionalTests.csproj" />
     <Project Path="tests/Tests/Tests.csproj" />
   </Folder>
 </Solution>

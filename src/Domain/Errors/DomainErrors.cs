@@ -30,7 +30,7 @@ public static class DomainErrors
 
         public static readonly Common.Error PrecioInvalido = new(
             "Plato.PrecioInvalido",
-            "El precio debe ser mayor o igual a cero."
+            "El precio debe ser mayor que cero."
         );
 
         public static readonly Common.Error NoDisponible = new(
@@ -69,6 +69,11 @@ public static class DomainErrors
         public static readonly Common.Error YaEntregado = new(
             "Pedido.YaEntregado",
             "No se puede modificar un pedido que ya fue entregado."
+        );
+
+        public static readonly Common.Error EstadoFinal = new(
+            "Pedido.EstadoFinal",
+            "No se puede modificar un pedido en estado final."
         );
 
         public static readonly Common.Error EstadoInvalido = new(

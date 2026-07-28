@@ -93,12 +93,24 @@ public sealed class Pedido : AggregateRoot
     /// </summary>
     public Result ActualizarEstado(EstadoPedido nuevoEstado)
     {
-        if (Estado == EstadoPedido.Entregado)
+        if (EsEstadoFinal)
         {
-            return Result.Failure(DomainErrors.Pedido.YaEntregado);
+            return Result.Failure(DomainErrors.Pedido.EstadoFinal);
         }
 
         if (!Enum.IsDefined(nuevoEstado))
+        {
+            return Result.Failure(DomainErrors.Pedido.EstadoInvalido);
+        }
+
+        var transicionValida = Estado switch
+        {
+            EstadoPedido.Pendiente => nuevoEstado is EstadoPedido.EnPreparacion or EstadoPedido.Cancelado,
+            EstadoPedido.EnPreparacion => nuevoEstado is EstadoPedido.Entregado or EstadoPedido.Cancelado,
+            _ => false,
+        };
+
+        if (!transicionValida)
         {
             return Result.Failure(DomainErrors.Pedido.EstadoInvalido);
         }
@@ -115,9 +127,9 @@ public sealed class Pedido : AggregateRoot
         IReadOnlyList<Plato> platos
     )
     {
-        if (Estado == EstadoPedido.Entregado)
+        if (EsEstadoFinal)
         {
-            return Result.Failure(DomainErrors.Pedido.YaEntregado);
+            return Result.Failure(DomainErrors.Pedido.EstadoFinal);
         }
 
         if (solicitudes.Count == 0)
@@ -139,6 +151,8 @@ public sealed class Pedido : AggregateRoot
     }
 
     public bool EstaEntregado => Estado == EstadoPedido.Entregado;
+
+    public bool EsEstadoFinal => Estado is EstadoPedido.Entregado or EstadoPedido.Cancelado;
 
     private static Result<List<PedidoLinea>> ConstruirLineas(
         IReadOnlyList<SolicitudLineaPedido> solicitudes,

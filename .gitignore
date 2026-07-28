@@ -1,21 +1,7 @@
-## bin/
-## obj/
-**/bin/
-**/obj/
-
-## IDE
+bin/
+obj/
 .vs/
-.idea/
+TestResults/
+coverage/
 *.user
 *.suo
-
-## Aspire
-.aspire/
-
-## OS
-Thumbs.db
-.DS_Store
-
-## Secrets
-appsettings.*.local.json
-secrets.json

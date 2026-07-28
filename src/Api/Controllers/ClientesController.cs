@@ -48,7 +48,7 @@ public sealed class ClientesController : ControllerBase
             new ObtenerClientePorIdQuery(id),
             cancellationToken
         );
-        return cliente is null ? NotFound() : Ok(cliente);
+        return cliente is null ? ResultExtensions.ToNotFoundResult("Cliente", id) : Ok(cliente);
     }
 
     [HttpPut("{id:guid}")]
