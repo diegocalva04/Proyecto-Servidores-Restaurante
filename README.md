@@ -59,3 +59,89 @@ src/ServiceDefaults
 tests/Tests
 tests/FunctionalTests
 ```
+
+## Dependencias entre proyectos
+
+```text
+Domain          → (ninguna)
+Application     → Domain
+Infrastructure  → Domain
+Api             → Application, Infrastructure, ServiceDefaults
+AppHost         → Api
+Tests           → Domain, Application
+```
+
+## Requisitos
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (para PostgreSQL y pgAdmin vía Aspire)
+- [Aspire CLI](https://aspire.dev/) (opcional, para `aspire run`)
+
+## Ejecución
+
+### Con Aspire (recomendado)
+
+```bash
+cd src/AppHost
+dotnet run
+```
+
+Esto levanta:
+
+- **API** — servicio REST
+- **PostgreSQL** — base de datos
+- **pgAdmin** — administración de BD
+- **Dashboard Aspire** — telemetría y health checks
+
+### Solo API (desarrollo aislado)
+
+```bash
+cd src/Api
+dotnet run
+```
+
+> La conexión a PostgreSQL se configurará en la Etapa 5 (Infraestructura).
+
+## Swagger
+
+En entorno de desarrollo, la documentación OpenAPI está disponible en:
+
+- `/swagger`
+
+## Tests
+
+```bash
+dotnet test Restaurante.slnx
+```
+
+Stack de pruebas: **xUnit**, **FluentAssertions**, **NSubstitute**.
+
+Además, el proyecto incluye:
+- pruebas unitarias de dominio y aplicación,
+- una prueba de integración con Aspire para validar la exposición de endpoints reales,
+- una colección de peticiones HTTP en [src/Api/Api.http](src/Api/Api.http).
+
+## Estado del proyecto
+
+| Etapa | Estado | Contenido |
+|-------|--------|-----------|
+| 1 | ✅ Completada | Diseño de arquitectura |
+| 2 | ✅ Completada | Solución, proyectos, referencias, Aspire base |
+| 3 | ✅ Completada | Dominio (entidades, VOs, reglas, eventos) |
+| 4 | ✅ Completada | Aplicación (CQRS, DTOs, handlers) |
+| 5 | ✅ Completada | Infraestructura (EF Core, repos, migraciones) |
+| 6 | ✅ Completada | API (controllers, endpoints) |
+| 7 | ✅ Completada | Tests unitarios |
+| 8 | ✅ Completada | Revisión final |
+
+## Principios aplicados
+
+- **SOLID** — responsabilidades separadas por capa
+- **DDD** — agregados, value objects y eventos de dominio
+- **Clean Architecture** — dependencias hacia el dominio
+- **CQRS ligero** — commands y queries sin MediatR
+- **Repository Pattern** — interfaces en Dominio, implementación en Infraestructura
+
+## Licencia
+
+Proyecto educativo / de referencia.
