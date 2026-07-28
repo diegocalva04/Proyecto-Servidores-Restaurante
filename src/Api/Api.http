@@ -1,6 +1,9 @@
 @baseUrl = http://localhost:5230
 @contentType = application/json
 
+@baseUrl = http://localhost:5230
+@contentType = application/json
+
 # Al iniciar mediante AppHost, copie la URL real de "api" desde el Dashboard de Aspire.
 
 ### Health
